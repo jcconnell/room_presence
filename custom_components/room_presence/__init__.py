@@ -6,7 +6,7 @@ import os
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
-from homeassistant.core import Event, HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 
 from .const import DOMAIN
 
@@ -15,6 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ["sensor"]
 CARD_URL = "/room_presence/room-presence-card.js"
 _FRONTEND_REGISTERED = False
+_LOVELACE_SCHEDULED = False
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -72,12 +73,18 @@ def _register_frontend(hass: HomeAssistant) -> None:
 
 
 def _schedule_lovelace_registration(hass: HomeAssistant) -> None:
-    """Schedule Lovelace resource registration after HA finishes starting."""
+    """Schedule Lovelace resource registration — fires once per HA lifecycle."""
+    global _LOVELACE_SCHEDULED
+    if _LOVELACE_SCHEDULED:
+        return
+    _LOVELACE_SCHEDULED = True
+
     if hass.is_running:
         hass.async_create_task(_async_register_lovelace_resource(hass))
     else:
-        async def _on_started(event: Event) -> None:
-            await _async_register_lovelace_resource(hass)
+        @callback
+        def _on_started(_event) -> None:
+            hass.async_create_task(_async_register_lovelace_resource(hass))
 
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _on_started)
 
@@ -85,26 +92,39 @@ def _schedule_lovelace_registration(hass: HomeAssistant) -> None:
 async def _async_register_lovelace_resource(hass: HomeAssistant) -> None:
     """Add the card JS as a Lovelace module resource if not already present."""
     try:
-        lovelace = hass.data.get("lovelace")
-        if lovelace is None:
-            _LOGGER.debug("Lovelace not ready, skipping resource auto-registration")
+        lovelace_data = hass.data.get("lovelace")
+        if not isinstance(lovelace_data, dict):
+            _LOGGER.warning(
+                "Room Presence: unexpected lovelace data type %s — "
+                "add %s as a Lovelace resource manually",
+                type(lovelace_data).__name__,
+                CARD_URL,
+            )
             return
 
-        resources = lovelace.get("resources")
+        resources = lovelace_data.get("resources")
         if resources is None:
+            _LOGGER.warning(
+                "Room Presence: no resources collection in lovelace data (keys: %s) — "
+                "add %s as a Lovelace resource manually",
+                list(lovelace_data.keys()),
+                CARD_URL,
+            )
             return
 
         await resources.async_load()
 
         if any(CARD_URL in item.get("url", "") for item in resources.async_items()):
+            _LOGGER.debug("Room Presence: Lovelace resource already registered")
             return
 
         await resources.async_create_item({"res_type": "module", "url": CARD_URL})
         _LOGGER.info("Room Presence card auto-registered as Lovelace resource")
+
     except Exception as err:  # noqa: BLE001
-        _LOGGER.debug(
-            "Could not auto-register Lovelace resource "
-            "(add %s manually if the card is missing): %s",
+        _LOGGER.warning(
+            "Room Presence: could not auto-register Lovelace resource "
+            "(add %s manually): %s",
             CARD_URL,
             err,
         )
