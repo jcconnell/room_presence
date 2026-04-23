@@ -1,0 +1,31 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="house-clip">
+      <path d="M128 28 L228 108 L228 228 L28 228 L28 108 Z"/>
+    </clipPath>
+  </defs>
+  <rect x="0" y="0" width="256" height="256" rx="48" fill="#1F6FEB"/>
+  <path d="M128 28 L228 108 L228 228 L28 228 L28 108 Z" fill="#FFFFFF"/>
+  <g clip-path="url(#house-clip)">
+    <g stroke="#E3EDFB" stroke-width="1.5">
+      <line x1="72" y1="80" x2="72" y2="228"/>
+      <line x1="112" y1="80" x2="112" y2="228"/>
+      <line x1="152" y1="80" x2="152" y2="228"/>
+      <line x1="192" y1="80" x2="192" y2="228"/>
+    </g>
+    <circle cx="48" cy="128" r="5" fill="#1F6FEB"/>
+    <circle cx="48" cy="156" r="5" fill="#10B981"/>
+    <circle cx="48" cy="184" r="5" fill="#F59E0B"/>
+    <circle cx="48" cy="212" r="5" fill="#A855F7"/>
+    <rect x="62" y="118" width="92" height="20" rx="6" fill="#1F6FEB"/>
+    <rect x="166" y="118" width="36" height="20" rx="6" fill="#1F6FEB" opacity="0.55"/>
+    <rect x="62" y="146" width="28" height="20" rx="6" fill="#10B981"/>
+    <rect x="102" y="146" width="44" height="20" rx="6" fill="#10B981"/>
+    <rect x="180" y="146" width="24" height="20" rx="6" fill="#10B981" opacity="0.55"/>
+    <rect x="96" y="174" width="80" height="20" rx="6" fill="#F59E0B"/>
+    <rect x="172" y="202" width="50" height="20" rx="6" fill="#A855F7"/>
+    <rect x="62" y="202" width="20" height="20" rx="6" fill="#A855F7" opacity="0.55"/>
+  </g>
+  <path d="M128 28 L228 108 L228 228 L28 228 L28 108 Z" fill="none" stroke="#0B3A8C" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M28 108 L128 28 L228 108" fill="none" stroke="#0B3A8C" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>
