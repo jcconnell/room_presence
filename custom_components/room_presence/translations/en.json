@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Room Presence",
+        "description": "Select a person to track. Their Bermuda BLE area sensor will be auto-discovered.",
+        "data": {
+          "person_entity": "Person",
+          "debounce_seconds": "Debounce time (seconds)"
+        },
+        "data_description": {
+          "person_entity": "The person entity to track. Their Bermuda BLE area sensor will be discovered automatically from linked device trackers.",
+          "debounce_seconds": "How long the person must stay in a room before the change is committed (5–300s). Increase to reduce bouncing noise."
+        }
+      }
+    },
+    "error": {
+      "no_bermuda_sensor": "Could not find a Bermuda area sensor for this person. Make sure Bermuda is configured and the person has a linked BLE tracker."
+    },
+    "abort": {
+      "already_configured": "This person is already configured.",
+      "no_person_entities": "No person entities found. Please configure people in Home Assistant first.",
+      "all_persons_configured": "All person entities are already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Room Presence Options",
+        "data": {
+          "debounce_seconds": "Debounce time (seconds)"
+        },
+        "data_description": {
+          "debounce_seconds": "How long the person must stay in a room before the change is committed (5–300 seconds)."
+        }
+      }
+    }
+  }
+}
