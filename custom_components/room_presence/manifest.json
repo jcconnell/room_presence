@@ -1,12 +1,12 @@
 {
   "domain": "room_presence",
   "name": "Room Presence",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "config_flow": true,
   "documentation": "https://github.com/jcconnell/room_presence",
   "issue_tracker": "https://github.com/jcconnell/room_presence/issues",
   "requirements": [],
-  "dependencies": ["frontend"],
+  "dependencies": ["http", "frontend"],
   "codeowners": ["@jcconnell"],
   "iot_class": "local_push"
 }

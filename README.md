@@ -24,22 +24,13 @@ Debounced room presence tracking for Home Assistant with a Gantt timeline Lovela
 1. In HACS, go to **Integrations** → **⋮** → **Custom repositories**
 2. Add `https://github.com/jcconnell/room_presence` with category **Integration**
 3. Install **Room Presence** and restart Home Assistant
-4. Add the Lovelace resource (see below)
-5. Go to **Settings → Devices & Services → Add Integration → Room Presence**
+4. Go to **Settings → Devices & Services → Add Integration → Room Presence**
+
+The card JS is injected into the HA frontend automatically — no manual Lovelace resource step needed.
 
 ### Manual
 
 Copy `custom_components/room_presence/` into your HA config `custom_components/` directory, then restart.
-
-## Lovelace Card Setup
-
-The card JS is served automatically after install. Add it as a Lovelace resource once:
-
-1. **Settings → Dashboards → Resources** (top-right ⋮ menu)
-2. **Add Resource**
-   - URL: `/room_presence/room-presence-card.js`
-   - Type: **JavaScript Module**
-3. Save and do a hard refresh (`Ctrl+Shift+R`)
 
 ## Card Usage
 
