@@ -14,7 +14,7 @@
  *   color_map            (optional) {room: "#hex"} overrides
  */
 
-const VERSION = "4.1.0";
+const VERSION = "4.1.3";
 
 const DEFAULT_COLORS = {
   "living room":    "#378ADD",
@@ -298,11 +298,11 @@ class RoomPresenceCard extends HTMLElement {
   }
 
   _bindTooltips() {
-    const wrap = this.shadowRoot.getElementById("wrap");
-    const tt = this.shadowRoot.getElementById("tt");
-    const ttRoom = this.shadowRoot.getElementById("tt-room");
-    const ttTime = this.shadowRoot.getElementById("tt-time");
-    const ttDur = this.shadowRoot.getElementById("tt-dur");
+    const wrap = this.shadowRoot.querySelector("#wrap");
+    const tt = this.shadowRoot.querySelector("#tt");
+    const ttRoom = this.shadowRoot.querySelector("#tt-room");
+    const ttTime = this.shadowRoot.querySelector("#tt-time");
+    const ttDur = this.shadowRoot.querySelector("#tt-dur");
     const use24h = this._config.time_format === "24h";
 
     const showTip = (clientX, clientY, data) => {
