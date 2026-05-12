@@ -28,10 +28,12 @@
       "init": {
         "title": "Room Presence Options",
         "data": {
-          "debounce_seconds": "Debounce time (seconds)"
+          "debounce_seconds": "Debounce time (seconds)",
+          "max_sessions": "Session history limit"
         },
         "data_description": {
-          "debounce_seconds": "How long the person must stay in a room before the change is committed (5–300 seconds)."
+          "debounce_seconds": "How long the person must stay in a room before the change is committed (5–300 seconds).",
+          "max_sessions": "Maximum number of room visits to store (50–1000). Increase for highly mobile entities like pets to fill the full timeline view."
         }
       }
     }
