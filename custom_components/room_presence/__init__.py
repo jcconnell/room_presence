@@ -86,7 +86,7 @@ async def _async_register_lovelace_resource(hass: HomeAssistant) -> None:
         if not lovelace:
             _LOGGER.debug("Room Presence: lovelace data not available")
             return
-        resources = lovelace.get("resources")
+        resources = getattr(lovelace, "resources", None)
         if not resources:
             _LOGGER.debug("Room Presence: lovelace resources not available (YAML mode?)")
             return
