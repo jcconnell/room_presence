@@ -14,7 +14,7 @@
  *   color_map            (optional) {room: "#hex"} overrides
  */
 
-const VERSION = "4.0.0";
+const VERSION = "4.1.0";
 
 const DEFAULT_COLORS = {
   "living room":    "#378ADD",
@@ -290,7 +290,7 @@ class RoomPresenceCard extends HTMLElement {
           </div>
         </div>
 
-        <div class="footer">Last ${cfg.hours}h - hover for details</div>
+        <div class="footer">Last ${cfg.hours}h &mdash; ${window.matchMedia("(hover: none)").matches ? "tap" : "hover"} for details</div>
       </ha-card>
     `;
 
@@ -305,27 +305,46 @@ class RoomPresenceCard extends HTMLElement {
     const ttDur = this.shadowRoot.getElementById("tt-dur");
     const use24h = this._config.time_format === "24h";
 
+    const showTip = (clientX, clientY, data) => {
+      ttRoom.textContent = data.room;
+      ttTime.textContent = data.current
+        ? `${fmtTime(data.from, use24h)} -> now`
+        : `${fmtTime(data.from, use24h)} -> ${fmtTime(data.to, use24h)}`;
+      ttDur.textContent = data.current ? "current room" : fmtDur(data.dur);
+
+      const wRect = wrap.getBoundingClientRect();
+      let x = clientX - wRect.left;
+      let y = clientY - wRect.top - 72;
+      if (y < 4) y = clientY - wRect.top + 8;
+
+      tt.style.display = "block";
+      tt.style.left = Math.max(0, Math.min(x - 70, wRect.width - 160)) + "px";
+      tt.style.top = y + "px";
+    };
+
+    const hideTip = () => { tt.style.display = "none"; };
+
     this.shadowRoot.querySelectorAll(".seg").forEach(seg => {
-      seg.addEventListener("mousemove", e => {
-        const data = JSON.parse(seg.dataset.tip);
-        ttRoom.textContent = data.room;
-        ttTime.textContent = data.current
-          ? `${fmtTime(data.from, use24h)} -> now`
-          : `${fmtTime(data.from, use24h)} -> ${fmtTime(data.to, use24h)}`;
-        ttDur.textContent = data.current ? "current room" : `${fmtDur(data.dur)}`;
+      const data = JSON.parse(seg.dataset.tip);
 
-        const wRect = wrap.getBoundingClientRect();
-        const sRect = seg.getBoundingClientRect();
-        let x = sRect.left - wRect.left + sRect.width / 2;
-        let y = sRect.top - wRect.top - 72;
-        if (y < 4) y = sRect.bottom - wRect.top + 4;
+      seg.addEventListener("mousemove", e => showTip(e.clientX, e.clientY, data));
+      seg.addEventListener("mouseleave", hideTip);
 
-        tt.style.display = "block";
-        tt.style.left = Math.max(0, Math.min(x - 70, wRect.width - 160)) + "px";
-        tt.style.top = y + "px";
+      seg.addEventListener("touchstart", e => {
+        e.preventDefault();
+        const t = e.touches[0];
+        showTip(t.clientX, t.clientY, data);
+      }, { passive: false });
+      seg.addEventListener("touchend", () => {
+        setTimeout(hideTip, 1800);
       });
-      seg.addEventListener("mouseleave", () => { tt.style.display = "none"; });
+      seg.addEventListener("touchcancel", hideTip);
     });
+
+    // Hide tooltip on touch outside the chart
+    wrap.addEventListener("touchstart", e => {
+      if (!e.target.classList.contains("seg")) hideTip();
+    }, { passive: true });
   }
 
   getCardSize() {
@@ -351,7 +370,9 @@ class RoomPresenceCard extends HTMLElement {
   }
 }
 
-customElements.define("room-presence-card", RoomPresenceCard);
+if (!customElements.get("room-presence-card")) {
+  customElements.define("room-presence-card", RoomPresenceCard);
+}
 
 // ----------------------------------------------------------
 // UI Editor
@@ -483,7 +504,9 @@ class RoomPresenceCardEditor extends HTMLElement {
   }
 }
 
-customElements.define("room-presence-card-editor", RoomPresenceCardEditor);
+if (!customElements.get("room-presence-card-editor")) {
+  customElements.define("room-presence-card-editor", RoomPresenceCardEditor);
+}
 
 // Register with HA card picker
 window.customCards = window.customCards || [];

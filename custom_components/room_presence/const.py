@@ -6,7 +6,8 @@ CONF_PERSON_ENTITY = "person_entity"
 CONF_DEBOUNCE_SECONDS = "debounce_seconds"
 
 DEFAULT_DEBOUNCE_SECONDS = 30
-MAX_SESSIONS = 50
+CONF_MAX_SESSIONS = "max_sessions"
+DEFAULT_MAX_SESSIONS = 200
 
 IGNORE_STATES = {"unknown", "unavailable", "not_home"}
 

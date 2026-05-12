@@ -15,7 +15,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN, CONF_PERSON_ENTITY, CONF_DEBOUNCE_SECONDS, DEFAULT_DEBOUNCE_SECONDS,
-    MAX_SESSIONS, IGNORE_STATES,
+    CONF_MAX_SESSIONS, DEFAULT_MAX_SESSIONS, IGNORE_STATES,
     ATTR_PREVIOUS_ROOM, ATTR_ENTERED_AT, ATTR_DURATION_IN_PREVIOUS,
     ATTR_RAW_ROOM, ATTR_PERSON_ENTITY, ATTR_BERMUDA_SENSOR,
     ATTR_BERMUDA_TRACKER, ATTR_DEBOUNCE_SECONDS, ATTR_SESSIONS,
@@ -37,6 +37,10 @@ async def async_setup_entry(
         CONF_DEBOUNCE_SECONDS,
         entry.data.get(CONF_DEBOUNCE_SECONDS, DEFAULT_DEBOUNCE_SECONDS),
     )
+    max_sessions = entry.options.get(
+        CONF_MAX_SESSIONS,
+        entry.data.get(CONF_MAX_SESSIONS, DEFAULT_MAX_SESSIONS),
+    )
 
     if not bermuda_area_sensor:
         sources = discover_sources(hass, person_entity)
@@ -50,7 +54,7 @@ async def async_setup_entry(
     async_add_entities([
         RoomPresenceSensor(
             hass, entry, person_entity, person_name,
-            bermuda_area_sensor, bermuda_tracker, debounce_seconds,
+            bermuda_area_sensor, bermuda_tracker, debounce_seconds, max_sessions,
         )
     ], True)
 
@@ -68,7 +72,7 @@ class RoomPresenceSensor(SensorEntity):
     _attr_should_poll = False
 
     def __init__(self, hass, entry, person_entity, person_name,
-                 bermuda_area_sensor, bermuda_tracker, debounce_seconds):
+                 bermuda_area_sensor, bermuda_tracker, debounce_seconds, max_sessions=DEFAULT_MAX_SESSIONS):
         self.hass = hass
         self._entry = entry
         self._person_entity = person_entity
@@ -76,6 +80,7 @@ class RoomPresenceSensor(SensorEntity):
         self._bermuda_area_sensor = bermuda_area_sensor
         self._bermuda_tracker = bermuda_tracker
         self._debounce_seconds = debounce_seconds
+        self._max_sessions = max_sessions
 
         self._attr_unique_id = f"{DOMAIN}_{person_entity}"
         self._attr_name = f"{person_name} Room Presence"
@@ -194,8 +199,8 @@ class RoomPresenceSensor(SensorEntity):
             "left_at": None,
             "duration_s": None,
         })
-        if len(self._sessions) > MAX_SESSIONS:
-            self._sessions = self._sessions[:MAX_SESSIONS]
+        if len(self._sessions) > self._max_sessions:
+            self._sessions = self._sessions[:self._max_sessions]
 
     def _write_attributes(self) -> None:
         attrs: dict = {

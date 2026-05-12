@@ -4,9 +4,10 @@ from __future__ import annotations
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-import homeassistant.helpers.config_validation as cv
-
-from .const import DOMAIN, CONF_PERSON_ENTITY, CONF_DEBOUNCE_SECONDS, DEFAULT_DEBOUNCE_SECONDS
+from .const import (
+    DOMAIN, CONF_PERSON_ENTITY, CONF_DEBOUNCE_SECONDS, DEFAULT_DEBOUNCE_SECONDS,
+    CONF_MAX_SESSIONS, DEFAULT_MAX_SESSIONS,
+)
 from .helpers import get_person_entities, discover_sources
 
 
@@ -66,10 +67,7 @@ class RoomPresenceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return RoomPresenceOptionsFlow(config_entry)
 
 
-class RoomPresenceOptionsFlow(config_entries.OptionsFlow):
-    def __init__(self, config_entry):
-        self.config_entry = config_entry
-
+class RoomPresenceOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
     async def async_step_init(self, user_input=None):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
@@ -82,5 +80,12 @@ class RoomPresenceOptionsFlow(config_entries.OptionsFlow):
                     self.config_entry.data.get(CONF_DEBOUNCE_SECONDS, DEFAULT_DEBOUNCE_SECONDS),
                 ),
             ): vol.All(int, vol.Range(min=5, max=300)),
+            vol.Optional(
+                CONF_MAX_SESSIONS,
+                default=self.config_entry.options.get(
+                    CONF_MAX_SESSIONS,
+                    self.config_entry.data.get(CONF_MAX_SESSIONS, DEFAULT_MAX_SESSIONS),
+                ),
+            ): vol.All(int, vol.Range(min=50, max=1000)),
         })
         return self.async_show_form(step_id="init", data_schema=schema)
