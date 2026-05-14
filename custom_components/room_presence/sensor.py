@@ -5,7 +5,7 @@ import asyncio
 import logging
 from datetime import datetime
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import RestoreSensor
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntryType
@@ -59,11 +59,11 @@ async def async_setup_entry(
     ], True)
 
 
-class RoomPresenceSensor(SensorEntity):
+class RoomPresenceSensor(RestoreSensor):
     """
     Debounced room presence sensor.
 
-    sessions attribute (list, newest first, max 50):
+    sessions attribute (list, newest first, max N):
       {"room": str, "entered_at": iso, "left_at": iso|None, "duration_s": int|None}
     """
 
@@ -108,11 +108,24 @@ class RoomPresenceSensor(SensorEntity):
         }
 
     async def async_added_to_hass(self) -> None:
+        # Restore session history from before the last restart
+        if last_state := await self.async_get_last_state():
+            restored = list(last_state.attributes.get(ATTR_SESSIONS, []))
+            if restored:
+                # Close the open session — we don't know the exact shutdown time
+                # so stamp it with the entity's last_updated timestamp
+                if restored[0].get("left_at") is None:
+                    restored[0]["left_at"] = last_state.last_updated.isoformat()
+                self._sessions = restored
+            if prev := last_state.attributes.get(ATTR_PREVIOUS_ROOM):
+                self._previous_room = prev
+
         self.async_on_remove(
             async_track_state_change_event(
                 self.hass, [self._bermuda_area_sensor], self._handle_area_change
             )
         )
+
         source_state = self.hass.states.get(self._bermuda_area_sensor)
         if source_state and source_state.state not in IGNORE_STATES:
             room = source_state.state
@@ -122,6 +135,9 @@ class RoomPresenceSensor(SensorEntity):
             self._entered_at = dt_util.utcnow()
             self._attr_native_value = room
             self._open_session(room, self._entered_at)
+            self._write_attributes()
+            self.async_write_ha_state()
+        elif self._sessions:
             self._write_attributes()
             self.async_write_ha_state()
 
