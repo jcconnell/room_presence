@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Presence Card Preview</title>
+  <script type="module" src="custom_components/room_presence/frontend/room-presence-card.js"></script>
+  <style>
+    :root {
+      --primary-text-color: #e1e1e1;
+      --secondary-text-color: #9e9e9e;
+      --disabled-text-color: #5a5a5a;
+      --divider-color: rgba(255,255,255,0.10);
+      --card-background-color: #1c1c1e;
+      --primary-color: #03a9f4;
+      --error-color: #e45e65;
+      --ha-card-border-radius: 12px;
+      --ha-card-box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #111827;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 24px 16px 32px;
+      min-height: 100vh;
+    }
+    .frame {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 0 4px;
+    }
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      background: #378ADD;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brand-icon svg { width: 18px; height: 18px; fill: white; }
+    .brand-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: #9e9e9e;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    room-presence-card {
+      display: block;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    /* Stub ha-card since we're outside HA */
+    ha-card {
+      display: block;
+      background: var(--card-background-color);
+      border-radius: var(--ha-card-border-radius);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      </div>
+      <span class="brand-text">Room Presence</span>
+    </div>
+    <div class="cards">
+      <room-presence-card id="card-jc"></room-presence-card>
+      <room-presence-card id="card-kirsten"></room-presence-card>
+      <room-presence-card id="card-duke"></room-presence-card>
+    </div>
+  </div>
+
+  <script>
+    customElements.whenDefined("room-presence-card").then(() => {
+      const now = Date.now();
+      const H = 3600_000;
+      const M = 60_000;
+
+      // Build a session object. hoursAgo = start, endHoursAgo = end (null = still open).
+      function sess(room, hoursAgo, endHoursAgo = null) {
+        const startMs = now - hoursAgo * H;
+        const endMs   = endHoursAgo !== null ? now - endHoursAgo * H : null;
+        return {
+          room,
+          entered_at:  new Date(startMs).toISOString(),
+          left_at:     endMs ? new Date(endMs).toISOString() : null,
+          duration_s:  endMs ? Math.round((endMs - startMs) / 1000) : null,
+        };
+      }
+
+      const mockHass = {
+        states: {
+          // ── JC ─────────────────────────────────────────────────────────────
+          "sensor.jc_room_presence": {
+            state: "Living Room",
+            attributes: {
+              friendly_name: "JC Room Presence",
+              raw_room: "Living Room",
+              entered_at: new Date(now - 1.2 * H).toISOString(),
+              sessions: [
+                sess("Living Room",  1.2),                  // current
+                sess("Office",       1.5,   1.2),           // 18m
+                sess("Kitchen",      1.83,  1.5),           // 20m lunch break
+                sess("Office",       9.83,  1.83),          // 8h work
+                sess("Kitchen",      10.17, 9.83),          // 20m coffee
+                sess("Main Bedroom", 18.17, 10.17),         // 8h sleep
+                sess("Main Bathroom",18.33, 18.17),         // 10m
+                sess("Living Room",  21.33, 18.33),         // 3h evening
+                sess("Kitchen",      22.17, 21.33),         // 50m dinner
+                sess("Living Room",  24,    22.17),         // afternoon
+              ],
+            },
+          },
+
+          // ── Kirsten ────────────────────────────────────────────────────────
+          "sensor.kirsten_room_presence": {
+            state: "Main Bedroom",
+            attributes: {
+              friendly_name: "Kirsten Room Presence",
+              raw_room: "Main Bedroom",
+              entered_at: new Date(now - 2.5 * H).toISOString(),
+              sessions: [
+                sess("Main Bedroom",  2.5),                 // current
+                sess("Living Room",   4.5,   2.5),          // 2h
+                sess("Kitchen",       5,     4.5),          // 30m
+                sess("Main Bedroom",  13,    5),            // 8h sleep
+                sess("Main Bathroom", 13.17, 13),           // 10m
+                sess("Living Room",   16.5,  13.17),        // 3.3h
+                sess("Kitchen",       17.33, 16.5),         // 50m dinner
+                sess("Guest Room",    21,    17.33),        // work/crafts
+                sess("Kitchen",       21.5,  21),           // snack
+                sess("Main Bedroom",  24,    21.5),         // previous night
+              ],
+            },
+          },
+
+          // ── Duke (dog) ─────────────────────────────────────────────────────
+          "sensor.duke_room_presence": {
+            state: "Living Room",
+            attributes: {
+              friendly_name: "Duke Room Presence",
+              raw_room: "Living Room",
+              entered_at: new Date(now - 0.3 * H).toISOString(),
+              sessions: [
+                sess("Living Room",  0.3),
+                sess("Kitchen",      0.58,  0.3),
+                sess("Main Bedroom", 0.92,  0.58),
+                sess("Hallway",      1.08,  0.92),
+                sess("Living Room",  1.67,  1.08),
+                sess("Kitchen",      2,     1.67),
+                sess("Living Room",  2.58,  2),
+                sess("Main Bedroom", 3,     2.58),
+                sess("Hallway",      3.17,  3),
+                sess("Kitchen",      3.58,  3.17),
+                sess("Living Room",  4.25,  3.58),
+                sess("Main Bedroom", 5,     4.25),
+                sess("Hallway",      5.17,  5),
+                sess("Living Room",  5.83,  5.17),
+                sess("Kitchen",      6.17,  5.83),
+                sess("Main Bedroom", 7.5,   6.17),
+                sess("Living Room",  8,     7.5),
+                sess("Kitchen",      8.33,  8),
+                sess("Main Bedroom", 10,    8.33),
+                sess("Hallway",      10.17, 10),
+                sess("Living Room",  11,    10.17),
+                sess("Kitchen",      11.33, 11),
+                sess("Living Room",  12.5,  11.33),
+                sess("Main Bedroom", 14,    12.5),
+                sess("Living Room",  15.5,  14),
+                sess("Kitchen",      16,    15.5),
+                sess("Main Bedroom", 20,    16),
+                sess("Living Room",  21.5,  20),
+                sess("Kitchen",      22,    21.5),
+                sess("Main Bedroom", 24,    22),
+              ],
+            },
+          },
+        },
+      };
+
+      [
+        { id: "card-jc",      entity: "sensor.jc_room_presence",      title: "JC" },
+        { id: "card-kirsten", entity: "sensor.kirsten_room_presence" },
+        { id: "card-duke",    entity: "sensor.duke_room_presence" },
+      ].forEach(({ id, entity, title }) => {
+        const el = document.getElementById(id);
+        const cfg = { entity, hours: 24, time_format: "12h", show_legend: true, show_current_status: true };
+        if (title) cfg.title = title;
+        el.setConfig(cfg);
+        el.hass = mockHass;
+      });
+    });
+  </script>
+</body>
+</html>
